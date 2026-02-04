@@ -133,61 +133,36 @@ export default function EmbedPage({ params }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
       <div className="container mx-auto">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
-              <Database className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-4xl font-bold text-slate-800">{databaseTitle}</h1>
-              <p className="text-sm text-slate-500 mt-1">{images.length} {images.length === 1 ? 'image' : 'images'}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Image Grid */}
+        {/* Image Grid - Clean, no text */}
         {images.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {images.map((image) => (
-              <Card key={image.id} className="group overflow-hidden hover:shadow-2xl transition-all duration-300 border-0">
-                <div className="relative aspect-square bg-slate-100">
-                  <img
-                    src={image.url}
-                    alt={image.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.parentElement.innerHTML = `
-                        <div class="w-full h-full flex items-center justify-center">
-                          <svg class="w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                          </svg>
-                        </div>
-                      `;
-                    }}
-                  />
-                </div>
-                {(image.name || image.caption) && (
-                  <div className="p-4 bg-white">
-                    {image.name && (
-                      <p className="font-semibold text-slate-800 truncate">{image.name}</p>
-                    )}
-                    {image.caption && (
-                      <p className="text-sm text-slate-500 mt-1 line-clamp-2">{image.caption}</p>
-                    )}
-                    <p className="text-xs text-slate-400 mt-2">From: {image.source}</p>
-                  </div>
-                )}
-              </Card>
+              <div key={image.id} className="group relative aspect-square overflow-hidden rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300">
+                <img
+                  src={image.url}
+                  alt=""
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.parentElement.innerHTML = `
+                      <div class="w-full h-full flex items-center justify-center bg-slate-100">
+                        <svg class="w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                      </div>
+                    `;
+                  }}
+                />
+              </div>
             ))}
           </div>
         ) : (
-          <Card className="p-12 text-center bg-white/80 backdrop-blur">
-            <ImageIcon className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-            <p className="text-lg text-slate-500">No images found in this database</p>
-            <p className="text-sm text-slate-400 mt-2">Make sure your database has file/media properties with images</p>
-          </Card>
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <ImageIcon className="w-16 h-16 mx-auto text-slate-300 mb-4" />
+              <p className="text-lg text-slate-500">No images found</p>
+            </div>
+          </div>
         )}
       </div>
     </div>
