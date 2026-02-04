@@ -12,29 +12,26 @@ export default function EmbedPage({ params }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [databaseTitle, setDatabaseTitle] = useState('');
-  const [embedId, setEmbedId] = useState(null);
 
   useEffect(() => {
-    // Handle async params
-    if (params && params.id) {
-      setEmbedId(params.id);
-    }
-  }, [params]);
-
-  useEffect(() => {
-    if (!embedId) return;
-
     const fetchData = async () => {
       try {
         setLoading(true);
         setError('');
 
+        // Get the ID from params
+        const embedId = params?.id;
+        if (!embedId) {
+          throw new Error('No embed ID provided');
+        }
+
         // Decode the credentials from URL using browser API
         let decodedData;
         try {
-          const decoded = window.atob(embedId);
+          const decoded = typeof window !== 'undefined' ? window.atob(embedId) : atob(embedId);
           decodedData = JSON.parse(decoded);
         } catch (decodeError) {
+          console.error('Decode error:', decodeError);
           throw new Error('Invalid embed link. Please generate a new one.');
         }
         
