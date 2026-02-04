@@ -124,13 +124,13 @@ export default function Home() {
                 </Label>
                 <Input
                   id="databaseId"
-                  placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                  placeholder="2e04b5f8ec238044a2a6dc8e6a23f686 or paste full URL"
                   value={databaseId}
                   onChange={(e) => setDatabaseId(e.target.value)}
                   className="h-12 text-base"
                 />
                 <p className="text-sm text-slate-500">
-                  Find this in your Notion database URL after the workspace name
+                  Paste the full Notion URL or just the database ID (32-character string)
                 </p>
               </div>
 
