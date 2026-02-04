@@ -1,21 +1,22 @@
-# Notion Database Grid Embed
+# Notion Database Image Grid Embed
 
-A beautiful Next.js application that transforms Notion databases into embeddable, read-only grid visualizations for your website.
+A beautiful Next.js application that transforms Notion databases into embeddable, responsive image galleries for your website.
 
 ## Features
 
 ✨ **Easy Integration** - Simply enter your Notion API credentials to get started  
 🔒 **Secure** - Credentials are validated before generating embed codes  
-📊 **Beautiful Grid Display** - Clean, responsive table layout with proper formatting  
+🖼️ **Beautiful Image Gallery** - Clean, responsive grid layout with hover effects  
 🎨 **Modern UI** - Built with Tailwind CSS and shadcn/ui components  
 🔗 **Instant Embed Codes** - Generate iframe codes that can be embedded anywhere  
 📱 **Responsive** - Works perfectly on all device sizes  
+🎯 **Auto Image Extraction** - Automatically extracts images from Notion file/media properties
 
 ## How It Works
 
 1. **Create a Notion Integration**
    - Go to https://www.notion.so/my-integrations
-   - Create a new integration and copy the API key (starts with `secret_`)
+   - Create a new integration and copy the API key (starts with `ntn_` or `secret_`)
 
 2. **Connect to Your Database**
    - Open your Notion database
@@ -26,6 +27,15 @@ A beautiful Next.js application that transforms Notion databases into embeddable
    - Enter your API key and database ID in the app
    - Click "Generate Embed Code"
    - Copy the iframe code and paste it into your website
+
+## Use Cases
+
+Perfect for:
+- 🎨 **Portfolio Galleries** - Display your work from Notion databases
+- 📸 **Photo Collections** - Showcase image libraries
+- 🎬 **Content Thumbnails** - Display video or post thumbnails
+- 🛍️ **Product Catalogs** - Show product images in a grid
+- 🖼️ **Art Galleries** - Create beautiful image showcases
 
 ## Tech Stack
 
