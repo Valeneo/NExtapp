@@ -1,104 +1,118 @@
-import { MongoClient } from 'mongodb'
-import { v4 as uuidv4 } from 'uuid'
-import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server';
+import { Client } from '@notionhq/client';
 
-// MongoDB connection
-let client
-let db
-
-async function connectToMongo() {
-  if (!client) {
-    client = new MongoClient(process.env.MONGO_URL)
-    await client.connect()
-    db = client.db(process.env.DB_NAME)
-  }
-  return db
-}
-
-// Helper function to handle CORS
-function handleCORS(response) {
-  response.headers.set('Access-Control-Allow-Origin', process.env.CORS_ORIGINS || '*')
-  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-  response.headers.set('Access-Control-Allow-Credentials', 'true')
-  return response
-}
-
-// OPTIONS handler for CORS
-export async function OPTIONS() {
-  return handleCORS(new NextResponse(null, { status: 200 }))
-}
-
-// Route handler function
-async function handleRoute(request, { params }) {
-  const { path = [] } = params
-  const route = `/${path.join('/')}`
-  const method = request.method
+// Validate Notion credentials
+export async function POST(request) {
+  const url = new URL(request.url);
+  const path = url.pathname;
 
   try {
-    const db = await connectToMongo()
+    const body = await request.json();
 
-    // Root endpoint - GET /api/root (since /api/ is not accessible with catch-all)
-    if (route === '/root' && method === 'GET') {
-      return handleCORS(NextResponse.json({ message: "Hello World" }))
-    }
-    // Root endpoint - GET /api/root (since /api/ is not accessible with catch-all)
-    if (route === '/' && method === 'GET') {
-      return handleCORS(NextResponse.json({ message: "Hello World" }))
+    // Validate endpoint
+    if (path.includes('/api/validate')) {
+      return handleValidate(body);
     }
 
-    // Status endpoints - POST /api/status
-    if (route === '/status' && method === 'POST') {
-      const body = await request.json()
-      
-      if (!body.client_name) {
-        return handleCORS(NextResponse.json(
-          { error: "client_name is required" }, 
-          { status: 400 }
-        ))
-      }
-
-      const statusObj = {
-        id: uuidv4(),
-        client_name: body.client_name,
-        timestamp: new Date()
-      }
-
-      await db.collection('status_checks').insertOne(statusObj)
-      return handleCORS(NextResponse.json(statusObj))
+    // Database endpoint
+    if (path.includes('/api/database')) {
+      return handleDatabase(body);
     }
 
-    // Status endpoints - GET /api/status
-    if (route === '/status' && method === 'GET') {
-      const statusChecks = await db.collection('status_checks')
-        .find({})
-        .limit(1000)
-        .toArray()
-
-      // Remove MongoDB's _id field from response
-      const cleanedStatusChecks = statusChecks.map(({ _id, ...rest }) => rest)
-      
-      return handleCORS(NextResponse.json(cleanedStatusChecks))
-    }
-
-    // Route not found
-    return handleCORS(NextResponse.json(
-      { error: `Route ${route} not found` }, 
-      { status: 404 }
-    ))
-
+    return NextResponse.json({ error: 'Invalid endpoint' }, { status: 404 });
   } catch (error) {
-    console.error('API Error:', error)
-    return handleCORS(NextResponse.json(
-      { error: "Internal server error" }, 
+    console.error('API Error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Internal server error' },
       { status: 500 }
-    ))
+    );
   }
 }
 
-// Export all HTTP methods
-export const GET = handleRoute
-export const POST = handleRoute
-export const PUT = handleRoute
-export const DELETE = handleRoute
-export const PATCH = handleRoute
+// Handle validation of Notion credentials
+async function handleValidate(body) {
+  const { notionApiKey, databaseId } = body;
+
+  if (!notionApiKey || !databaseId) {
+    return NextResponse.json(
+      { error: 'Notion API Key and Database ID are required' },
+      { status: 400 }
+    );
+  }
+
+  try {
+    // Initialize Notion client with provided credentials
+    const notion = new Client({ auth: notionApiKey });
+
+    // Try to retrieve the database to validate credentials
+    await notion.databases.retrieve({ database_id: databaseId });
+
+    return NextResponse.json({ success: true, message: 'Credentials validated successfully' });
+  } catch (error) {
+    console.error('Validation error:', error);
+    
+    let errorMessage = 'Invalid credentials or database not accessible';
+    
+    if (error.code === 'unauthorized') {
+      errorMessage = 'Invalid Notion API Key';
+    } else if (error.code === 'object_not_found') {
+      errorMessage = 'Database not found. Make sure the integration has access to the database.';
+    } else if (error.code === 'restricted_resource') {
+      errorMessage = 'Database access restricted. Connect your integration to the database in Notion.';
+    }
+
+    return NextResponse.json({ error: errorMessage }, { status: 400 });
+  }
+}
+
+// Handle database query
+async function handleDatabase(body) {
+  const { notionApiKey, databaseId } = body;
+
+  if (!notionApiKey || !databaseId) {
+    return NextResponse.json(
+      { error: 'Notion API Key and Database ID are required' },
+      { status: 400 }
+    );
+  }
+
+  try {
+    // Initialize Notion client
+    const notion = new Client({ auth: notionApiKey });
+
+    // Get database info
+    const database = await notion.databases.retrieve({ database_id: databaseId });
+    const databaseTitle = database.title?.[0]?.plain_text || 'Notion Database';
+
+    // Query the database
+    const response = await notion.databases.query({
+      database_id: databaseId,
+      page_size: 100, // Limit to 100 entries for performance
+    });
+
+    return NextResponse.json({
+      results: response.results,
+      databaseTitle: databaseTitle,
+      hasMore: response.has_more,
+      nextCursor: response.next_cursor
+    });
+  } catch (error) {
+    console.error('Database query error:', error);
+    
+    let errorMessage = 'Failed to query database';
+    
+    if (error.code === 'unauthorized') {
+      errorMessage = 'Invalid Notion API Key';
+    } else if (error.code === 'object_not_found') {
+      errorMessage = 'Database not found';
+    } else if (error.code === 'restricted_resource') {
+      errorMessage = 'Database access restricted';
+    }
+
+    return NextResponse.json({ error: errorMessage }, { status: 400 });
+  }
+}
+
+export async function GET(request) {
+  return NextResponse.json({ message: 'Notion Database Grid API' });
+}
