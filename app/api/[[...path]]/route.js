@@ -100,7 +100,7 @@ async function handleValidate(body) {
 
 // Handle database query
 async function handleDatabase(body) {
-  const { notionApiKey, databaseId } = body;
+  let { notionApiKey, databaseId } = body;
 
   if (!notionApiKey || !databaseId) {
     return NextResponse.json(
@@ -112,6 +112,14 @@ async function handleDatabase(body) {
   try {
     // Initialize Notion client
     const notion = new Client({ auth: notionApiKey });
+
+    // Extract database ID from URL if full URL is provided
+    if (databaseId.includes('notion.so') || databaseId.includes('http')) {
+      const urlMatch = databaseId.match(/([a-f0-9]{32}|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
+      if (urlMatch) {
+        databaseId = urlMatch[0];
+      }
+    }
 
     // Normalize database ID - add dashes if not present
     let normalizedDbId = databaseId.replace(/-/g, ''); // Remove existing dashes
