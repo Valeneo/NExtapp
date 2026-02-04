@@ -4,14 +4,6 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Database, Image as ImageIcon } from 'lucide-react';
-import Head from 'next/head';
-
-'use client';
-
-import { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Database, Image as ImageIcon } from 'lucide-react';
 
 export default function EmbedPage({ params }) {
   const [images, setImages] = useState([]);
