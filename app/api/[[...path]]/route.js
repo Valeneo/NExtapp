@@ -42,8 +42,22 @@ async function handleValidate(body) {
     // Initialize Notion client with provided credentials
     const notion = new Client({ auth: notionApiKey });
 
+    // Normalize database ID - add dashes if not present
+    let normalizedDbId = databaseId.replace(/-/g, ''); // Remove existing dashes
+    
+    // Add dashes in UUID format: 8-4-4-4-12
+    if (normalizedDbId.length === 32) {
+      normalizedDbId = [
+        normalizedDbId.slice(0, 8),
+        normalizedDbId.slice(8, 12),
+        normalizedDbId.slice(12, 16),
+        normalizedDbId.slice(16, 20),
+        normalizedDbId.slice(20)
+      ].join('-');
+    }
+
     // Try to retrieve the database to validate credentials
-    await notion.databases.retrieve({ database_id: databaseId });
+    await notion.databases.retrieve({ database_id: normalizedDbId });
 
     return NextResponse.json({ success: true, message: 'Credentials validated successfully' });
   } catch (error) {
@@ -57,6 +71,8 @@ async function handleValidate(body) {
       errorMessage = 'Database not found. Make sure:\n1. The database ID is correct\n2. Your integration is connected to the database (click "..." → "Add connections" in Notion)';
     } else if (error.code === 'restricted_resource') {
       errorMessage = 'Database access restricted. Connect your integration to the database in Notion (click "..." → "Add connections")';
+    } else if (error.code === 'invalid_request_url') {
+      errorMessage = 'Invalid Database ID format. Please check and try again.';
     }
 
     return NextResponse.json({ error: errorMessage }, { status: 400 });
