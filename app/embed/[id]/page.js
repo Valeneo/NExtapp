@@ -29,8 +29,14 @@ export default function EmbedPage({ params }) {
         setLoading(true);
         setError('');
 
-        // Decode the credentials from URL
-        const decodedData = JSON.parse(atob(embedId));
+        // Decode the credentials from URL using browser API
+        let decodedData;
+        try {
+          const decoded = window.atob(embedId);
+          decodedData = JSON.parse(decoded);
+        } catch (decodeError) {
+          throw new Error('Invalid embed link. Please generate a new one.');
+        }
         
         const response = await fetch('/api/database', {
           method: 'POST',
