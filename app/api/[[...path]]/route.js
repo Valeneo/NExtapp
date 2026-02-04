@@ -94,12 +94,26 @@ async function handleDatabase(body) {
     // Initialize Notion client
     const notion = new Client({ auth: notionApiKey });
 
+    // Normalize database ID - add dashes if not present
+    let normalizedDbId = databaseId.replace(/-/g, ''); // Remove existing dashes
+    
+    // Add dashes in UUID format: 8-4-4-4-12
+    if (normalizedDbId.length === 32) {
+      normalizedDbId = [
+        normalizedDbId.slice(0, 8),
+        normalizedDbId.slice(8, 12),
+        normalizedDbId.slice(12, 16),
+        normalizedDbId.slice(16, 20),
+        normalizedDbId.slice(20)
+      ].join('-');
+    }
+
     // Get database info to retrieve data_source_id (Notion API v2025-09-03)
-    const database = await notion.databases.retrieve({ database_id: databaseId });
+    const database = await notion.databases.retrieve({ database_id: normalizedDbId });
     const databaseTitle = database.title?.[0]?.plain_text || 'Notion Database';
     
     // Get the first data source ID from the data_sources array
-    const dataSourceId = database.data_sources?.[0]?.id || database.id;
+    const dataSourceId = database.data_sources?.[0]?.id || normalizedDbId;
 
     // Query the database using dataSources API (Notion SDK v5.9.0+)
     const response = await notion.dataSources.query({
@@ -124,6 +138,8 @@ async function handleDatabase(body) {
       errorMessage = 'Database not found';
     } else if (error.code === 'restricted_resource') {
       errorMessage = 'Database access restricted';
+    } else if (error.code === 'invalid_request_url') {
+      errorMessage = 'Invalid Database ID format';
     }
 
     return NextResponse.json({ error: errorMessage }, { status: 400 });
