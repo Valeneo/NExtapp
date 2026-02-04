@@ -59,10 +59,8 @@ export default function EmbedPage({ params }) {
       }
     };
 
-    if (params.id) {
-      fetchData();
-    }
-  }, [params.id]);
+    fetchData();
+  }, [embedId]);
 
   const renderPropertyValue = (property) => {
     if (!property) return 'N/A';
