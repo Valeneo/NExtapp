@@ -20,19 +20,19 @@ export default function EmbedPage({ params }) {
         setError('');
 
         // Get the ID from params - params is an object with id property
-        console.log('Params:', params);
-        const embedId = params?.id || params;
-        console.log('Embed ID:', embedId);
+        let embedId = params?.id || params;
         
         if (!embedId || typeof embedId !== 'string') {
           throw new Error('No valid embed ID provided');
         }
 
+        // URL decode the ID first (Next.js URL encodes the path params)
+        embedId = decodeURIComponent(embedId);
+
         // Decode the credentials from URL using browser API
         let decodedData;
         try {
           const decoded = window.atob(embedId);
-          console.log('Decoded:', decoded);
           decodedData = JSON.parse(decoded);
         } catch (decodeError) {
           console.error('Decode error:', decodeError);
