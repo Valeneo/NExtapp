@@ -12,15 +12,25 @@ export default function EmbedPage({ params }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [databaseTitle, setDatabaseTitle] = useState('');
+  const [embedId, setEmbedId] = useState(null);
 
   useEffect(() => {
+    // Handle async params
+    if (params && params.id) {
+      setEmbedId(params.id);
+    }
+  }, [params]);
+
+  useEffect(() => {
+    if (!embedId) return;
+
     const fetchData = async () => {
       try {
         setLoading(true);
         setError('');
 
         // Decode the credentials from URL
-        const decodedData = JSON.parse(atob(params.id));
+        const decodedData = JSON.parse(atob(embedId));
         
         const response = await fetch('/api/database', {
           method: 'POST',
