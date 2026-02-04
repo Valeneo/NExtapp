@@ -81,7 +81,9 @@ async function handleDatabase(body) {
     // Get database info to retrieve data_source_id (Notion API v2025-09-03)
     const database = await notion.databases.retrieve({ database_id: databaseId });
     const databaseTitle = database.title?.[0]?.plain_text || 'Notion Database';
-    const dataSourceId = database.data_source_id || database.id; // Use data_source_id if available
+    
+    // Get the first data source ID from the data_sources array
+    const dataSourceId = database.data_sources?.[0]?.id || database.id;
 
     // Query the database using dataSources API (Notion SDK v5.9.0+)
     const response = await notion.dataSources.query({
