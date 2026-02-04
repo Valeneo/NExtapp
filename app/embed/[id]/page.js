@@ -1,14 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Database } from 'lucide-react';
+import { Loader2, Database, Image as ImageIcon } from 'lucide-react';
 
 export default function EmbedPage({ params }) {
-  const [data, setData] = useState([]);
-  const [properties, setProperties] = useState([]);
+  const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [databaseTitle, setDatabaseTitle] = useState('');
@@ -51,14 +49,56 @@ export default function EmbedPage({ params }) {
           throw new Error(result.error || 'Failed to fetch database');
         }
 
-        setData(result.results || []);
         setDatabaseTitle(result.databaseTitle || 'Notion Database');
         
-        // Extract property names from first result
+        // Extract images from the database results
+        const extractedImages = [];
+        
         if (result.results && result.results.length > 0) {
-          const props = Object.keys(result.results[0].properties);
-          setProperties(props);
+          result.results.forEach((item, index) => {
+            const properties = item.properties;
+            
+            // Try to find image URLs in various properties
+            Object.entries(properties).forEach(([key, prop]) => {
+              // Files property
+              if (prop.files && Array.isArray(prop.files) && prop.files.length > 0) {
+                prop.files.forEach(file => {
+                  if (file.type === 'file' && file.file?.url) {
+                    extractedImages.push({
+                      id: `${item.id}-${key}-file`,
+                      url: file.file.url,
+                      name: file.name || `Image ${extractedImages.length + 1}`,
+                      caption: file.caption?.[0]?.plain_text || '',
+                      source: key
+                    });
+                  } else if (file.type === 'external' && file.external?.url) {
+                    extractedImages.push({
+                      id: `${item.id}-${key}-external`,
+                      url: file.external.url,
+                      name: file.name || `Image ${extractedImages.length + 1}`,
+                      caption: file.caption?.[0]?.plain_text || '',
+                      source: key
+                    });
+                  }
+                });
+              }
+              
+              // URL property (might contain image URLs)
+              if (prop.url && (prop.url.includes('.jpg') || prop.url.includes('.png') || prop.url.includes('.jpeg') || prop.url.includes('.gif') || prop.url.includes('.webp'))) {
+                extractedImages.push({
+                  id: `${item.id}-${key}-url`,
+                  url: prop.url,
+                  name: `Image from ${key}`,
+                  caption: '',
+                  source: key
+                });
+              }
+            });
+          });
         }
+        
+        setImages(extractedImages);
+        setError('');
       } catch (err) {
         setError(err.message || 'Failed to load database');
       } finally {
@@ -69,120 +109,12 @@ export default function EmbedPage({ params }) {
     fetchData();
   }, [params]);
 
-  const renderPropertyValue = (property) => {
-    if (!property) return 'N/A';
-
-    try {
-      // Title
-      if (property.title && Array.isArray(property.title) && property.title.length > 0) {
-        return property.title.map(t => t.plain_text).join('');
-      }
-
-      // Rich text
-      if (property.rich_text && Array.isArray(property.rich_text) && property.rich_text.length > 0) {
-        return property.rich_text.map(t => t.plain_text).join('');
-      }
-
-      // Select
-      if (property.select && property.select.name) {
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-            {property.select.name}
-          </span>
-        );
-      }
-
-      // Multi-select
-      if (property.multi_select && Array.isArray(property.multi_select)) {
-        return (
-          <div className="flex flex-wrap gap-1">
-            {property.multi_select.map((item, idx) => (
-              <span
-                key={idx}
-                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
-              >
-                {item.name}
-              </span>
-            ))}
-          </div>
-        );
-      }
-
-      // Date
-      if (property.date && property.date.start) {
-        const date = new Date(property.date.start);
-        return date.toLocaleDateString();
-      }
-
-      // Checkbox
-      if (property.type === 'checkbox') {
-        return property.checkbox ? '✓' : '✗';
-      }
-
-      // Number
-      if (property.number !== null && property.number !== undefined) {
-        return property.number;
-      }
-
-      // URL
-      if (property.url) {
-        return (
-          <a
-            href={property.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline"
-          >
-            Link
-          </a>
-        );
-      }
-
-      // Email
-      if (property.email) {
-        return (
-          <a href={`mailto:${property.email}`} className="text-blue-600 hover:underline">
-            {property.email}
-          </a>
-        );
-      }
-
-      // Phone
-      if (property.phone_number) {
-        return property.phone_number;
-      }
-
-      // People
-      if (property.people && Array.isArray(property.people)) {
-        return property.people.map(p => p.name).join(', ');
-      }
-
-      // Files
-      if (property.files && Array.isArray(property.files)) {
-        return `${property.files.length} file(s)`;
-      }
-
-      // Status
-      if (property.status && property.status.name) {
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-            {property.status.name}
-          </span>
-        );
-      }
-
-      return '—';
-    } catch (err) {
-      return 'Error';
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="text-center space-y-4">
           <Loader2 className="w-12 h-12 animate-spin mx-auto text-blue-600" />
-          <p className="text-lg text-slate-600">Loading database...</p>
+          <p className="text-lg text-slate-600">Loading images...</p>
         </div>
       </div>
     );
@@ -199,51 +131,62 @@ export default function EmbedPage({ params }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4">
-      <div className="container mx-auto py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
+      <div className="container mx-auto">
         {/* Header */}
-        <div className="mb-6 flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
-            <Database className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-slate-800">{databaseTitle}</h1>
-            <p className="text-sm text-slate-500">{data.length} entries</p>
+        <div className="mb-8 text-center">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+              <Database className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold text-slate-800">{databaseTitle}</h1>
+              <p className="text-sm text-slate-500 mt-1">{images.length} {images.length === 1 ? 'image' : 'images'}</p>
+            </div>
           </div>
         </div>
 
-        {/* Data Grid */}
-        {data.length > 0 ? (
-          <Card className="shadow-xl overflow-hidden border-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50">
-                    {properties.map((prop) => (
-                      <TableHead key={prop} className="font-semibold text-slate-700">
-                        {prop}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.map((item, idx) => (
-                    <TableRow key={item.id || idx} className="hover:bg-slate-50">
-                      {properties.map((prop) => (
-                        <TableCell key={prop} className="py-4">
-                          {renderPropertyValue(item.properties[prop])}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </Card>
+        {/* Image Grid */}
+        {images.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {images.map((image) => (
+              <Card key={image.id} className="group overflow-hidden hover:shadow-2xl transition-all duration-300 border-0">
+                <div className="relative aspect-square bg-slate-100">
+                  <img
+                    src={image.url}
+                    alt={image.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.parentElement.innerHTML = `
+                        <div class="w-full h-full flex items-center justify-center">
+                          <svg class="w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                          </svg>
+                        </div>
+                      `;
+                    }}
+                  />
+                </div>
+                {(image.name || image.caption) && (
+                  <div className="p-4 bg-white">
+                    {image.name && (
+                      <p className="font-semibold text-slate-800 truncate">{image.name}</p>
+                    )}
+                    {image.caption && (
+                      <p className="text-sm text-slate-500 mt-1 line-clamp-2">{image.caption}</p>
+                    )}
+                    <p className="text-xs text-slate-400 mt-2">From: {image.source}</p>
+                  </div>
+                )}
+              </Card>
+            ))}
+          </div>
         ) : (
-          <Card className="p-12 text-center">
-            <Database className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-            <p className="text-lg text-slate-500">No entries found in this database</p>
+          <Card className="p-12 text-center bg-white/80 backdrop-blur">
+            <ImageIcon className="w-16 h-16 mx-auto text-slate-300 mb-4" />
+            <p className="text-lg text-slate-500">No images found in this database</p>
+            <p className="text-sm text-slate-400 mt-2">Make sure your database has file/media properties with images</p>
           </Card>
         )}
       </div>
