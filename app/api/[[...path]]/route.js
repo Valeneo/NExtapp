@@ -2,20 +2,18 @@ import { NextResponse } from 'next/server';
 import { Client } from '@notionhq/client';
 
 // Validate Notion credentials
-export async function POST(request) {
-  const url = new URL(request.url);
-  const path = url.pathname;
-
+export async function POST(request, { params }) {
   try {
     const body = await request.json();
+    const path = params.path ? params.path.join('/') : '';
 
     // Validate endpoint
-    if (path.includes('/api/validate')) {
+    if (path === 'validate') {
       return handleValidate(body);
     }
 
     // Database endpoint
-    if (path.includes('/api/database')) {
+    if (path === 'database') {
       return handleDatabase(body);
     }
 
