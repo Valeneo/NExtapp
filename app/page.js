@@ -39,8 +39,11 @@ export default function Home() {
         throw new Error(data.error || 'Failed to validate credentials');
       }
 
-      // Encode credentials for URL
-      const encodedData = btoa(JSON.stringify({ notionApiKey, databaseId }));
+      // Encode credentials for URL (use Buffer in browser)
+      const encodedData = typeof window !== 'undefined' 
+        ? window.btoa(JSON.stringify({ notionApiKey, databaseId }))
+        : Buffer.from(JSON.stringify({ notionApiKey, databaseId })).toString('base64');
+      
       const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
       const embedLink = `${baseUrl}/embed/${encodedData}`;
       
