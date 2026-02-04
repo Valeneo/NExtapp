@@ -78,13 +78,14 @@ async function handleDatabase(body) {
     // Initialize Notion client
     const notion = new Client({ auth: notionApiKey });
 
-    // Get database info
+    // Get database info to retrieve data_source_id (Notion API v2025-09-03)
     const database = await notion.databases.retrieve({ database_id: databaseId });
     const databaseTitle = database.title?.[0]?.plain_text || 'Notion Database';
+    const dataSourceId = database.data_source_id || database.id; // Use data_source_id if available
 
-    // Query the database using dataSources API (newer SDK version)
+    // Query the database using dataSources API (Notion SDK v5.9.0+)
     const response = await notion.dataSources.query({
-      data_source_id: databaseId,
+      data_source_id: dataSourceId,
       page_size: 100, // Limit to 100 entries for performance
     });
 
