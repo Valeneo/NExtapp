@@ -19,16 +19,20 @@ export default function EmbedPage({ params }) {
         setLoading(true);
         setError('');
 
-        // Get the ID from params
-        const embedId = params?.id;
-        if (!embedId) {
-          throw new Error('No embed ID provided');
+        // Get the ID from params - params is an object with id property
+        console.log('Params:', params);
+        const embedId = params?.id || params;
+        console.log('Embed ID:', embedId);
+        
+        if (!embedId || typeof embedId !== 'string') {
+          throw new Error('No valid embed ID provided');
         }
 
         // Decode the credentials from URL using browser API
         let decodedData;
         try {
-          const decoded = typeof window !== 'undefined' ? window.atob(embedId) : atob(embedId);
+          const decoded = window.atob(embedId);
+          console.log('Decoded:', decoded);
           decodedData = JSON.parse(decoded);
         } catch (decodeError) {
           console.error('Decode error:', decodeError);
