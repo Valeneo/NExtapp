@@ -54,9 +54,9 @@ async function handleValidate(body) {
     if (error.code === 'unauthorized') {
       errorMessage = 'Invalid Notion API Key';
     } else if (error.code === 'object_not_found') {
-      errorMessage = 'Database not found. Make sure the integration has access to the database.';
+      errorMessage = 'Database not found. Make sure:\n1. The database ID is correct\n2. Your integration is connected to the database (click "..." → "Add connections" in Notion)';
     } else if (error.code === 'restricted_resource') {
-      errorMessage = 'Database access restricted. Connect your integration to the database in Notion.';
+      errorMessage = 'Database access restricted. Connect your integration to the database in Notion (click "..." → "Add connections")';
     }
 
     return NextResponse.json({ error: errorMessage }, { status: 400 });
