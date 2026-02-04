@@ -107,39 +107,48 @@ user_problem_statement: "Test the Notion Database Grid Embed application backend
 backend:
   - task: "API Health Check Endpoint"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/app/api/[[...path]]/route.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "testing"
         comment: "Initial testing setup - GET /api/test endpoint needs testing"
+      - working: true
+        agent: "testing"
+        comment: "✅ PASSED - GET /api/test returns correct message 'Notion Database Grid API' with 200 status code"
 
   - task: "Validate Notion Credentials Endpoint"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/app/api/[[...path]]/route.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "testing"
         comment: "Initial testing setup - POST /api/validate endpoint needs testing for error handling"
+      - working: true
+        agent: "testing"
+        comment: "✅ PASSED - POST /api/validate properly validates missing credentials, returns 400 with 'Notion API Key and Database ID are required' error message for all test cases (empty payload, missing fields, empty strings)"
 
   - task: "Database Query Endpoint"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/app/api/[[...path]]/route.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "testing"
         comment: "Initial testing setup - POST /api/database endpoint needs testing for error handling"
+      - working: true
+        agent: "testing"
+        comment: "✅ PASSED - POST /api/database properly validates missing credentials, returns 400 with 'Notion API Key and Database ID are required' error message for all test cases (empty payload, missing fields, empty strings)"
 
 frontend:
   - task: "Frontend UI Components"
