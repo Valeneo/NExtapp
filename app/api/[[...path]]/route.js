@@ -29,7 +29,7 @@ export async function POST(request, { params }) {
 
 // Handle validation of Notion credentials
 async function handleValidate(body) {
-  const { notionApiKey, databaseId } = body;
+  let { notionApiKey, databaseId } = body;
 
   if (!notionApiKey || !databaseId) {
     return NextResponse.json(
@@ -41,6 +41,20 @@ async function handleValidate(body) {
   try {
     // Initialize Notion client with provided credentials
     const notion = new Client({ auth: notionApiKey });
+
+    // Extract database ID from URL if full URL is provided
+    if (databaseId.includes('notion.so') || databaseId.includes('http')) {
+      // Try to extract ID from URL like: https://www.notion.so/workspace/DATABASE_ID?v=...
+      const urlMatch = databaseId.match(/([a-f0-9]{32}|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
+      if (urlMatch) {
+        databaseId = urlMatch[0];
+      } else {
+        return NextResponse.json(
+          { error: 'Could not extract database ID from URL. Please provide just the database ID.' },
+          { status: 400 }
+        );
+      }
+    }
 
     // Normalize database ID - add dashes if not present
     let normalizedDbId = databaseId.replace(/-/g, ''); // Remove existing dashes
@@ -54,6 +68,11 @@ async function handleValidate(body) {
         normalizedDbId.slice(16, 20),
         normalizedDbId.slice(20)
       ].join('-');
+    } else {
+      return NextResponse.json(
+        { error: 'Invalid Database ID format. Should be 32 characters (with or without dashes).' },
+        { status: 400 }
+      );
     }
 
     // Try to retrieve the database to validate credentials
