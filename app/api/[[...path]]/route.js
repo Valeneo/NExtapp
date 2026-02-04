@@ -82,9 +82,9 @@ async function handleDatabase(body) {
     const database = await notion.databases.retrieve({ database_id: databaseId });
     const databaseTitle = database.title?.[0]?.plain_text || 'Notion Database';
 
-    // Query the database
-    const response = await notion.databases.query({
-      database_id: databaseId,
+    // Query the database using dataSources API (newer SDK version)
+    const response = await notion.dataSources.query({
+      data_source_id: databaseId,
       page_size: 100, // Limit to 100 entries for performance
     });
 
