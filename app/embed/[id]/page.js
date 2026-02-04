@@ -6,6 +6,18 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Database, Image as ImageIcon } from 'lucide-react';
 import Head from 'next/head';
 
+import { Metadata } from 'next';
+
+export const metadata = {
+  title: 'Notion Image Gallery',
+  description: 'Beautiful image gallery from Notion database',
+  openGraph: {
+    title: 'Notion Image Gallery',
+    description: 'View your Notion database images in a beautiful grid',
+    type: 'website',
+  },
+};
+
 export default function EmbedPage({ params }) {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
